@@ -1,4 +1,6 @@
 
+**Link to demo video: https://www.youtube.com/watch?v=zYjHLKL1Vf8**
+
 ## Inspiration
 We wanted to better understand the magnitude of the growing number of COVID-19 cases and convey our findings in an illustrative manner to spread awareness.
 
