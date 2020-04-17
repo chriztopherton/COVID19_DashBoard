@@ -16,6 +16,7 @@ library(leaflet.extras)
 library(reactable)
 library(shinythemes)
 library(repmis) 
+library(formattable)
 # Historical data----------------------------------------------
 
 #read data from link, will get working later
@@ -65,7 +66,8 @@ US_stats <- US_data %>% mutate(`% change` = 100 * (lead(Confirmed) - Confirmed) 
 ui <- dashboardPage(
   dashboardHeader(title = "COVID-19 Tracker",titleWidth = 180),
   
-  dashboardSidebar(width = 180,tags$head(tags$style(HTML('.content-wrapper { height: 1000px !important;}'))),
+  dashboardSidebar(width = 180,tags$head(tags$style(HTML('.content-wrapper { height: 1000px !important;}
+                                                         '))),
                    sidebarMenu(
                      menuItem("Live Data", tabName = "live", icon = icon("dashboard"),
                               menuSubItem(selectInput("country","Select a Country",choices=country_names),tabName = "live")),
@@ -89,17 +91,20 @@ ui <- dashboardPage(
                 infoBoxOutput("ConfirmedCases",width = 3),
                 infoBoxOutput("Recoveries",width=3),
                 infoBoxOutput("Mortalities",width=3),
-                infoBoxOutput("deathRatio",width=3),
-                box("Cases by Province",align="center",solidHeader = TRUE,
-                    helpText("Due to reporting restrictions
-                                 not all countries have meaningful provincial data."),
-                    helpText("You can also remove 'trace 0' to see a better represenation."),
-                    width=7,
-                    plotlyOutput("plot1",height = 500,width=600)),
-                box(solidHeader = TRUE,strong("Please Note: Not all locations have City data"),
-                    reactableOutput("dataTable"),width=5)
-                
-              )
+                infoBoxOutput("deathRatio",width=3)),
+              fluidRow(
+                #box("Cases by Province", status = "primary",align="center",solidHeader = TRUE,
+                #helpText("Due to reporting restrictions
+                # not all countries have meaningful provincial data."),
+                #helpText("You can also remove 'trace 0' to see a better represenation."),
+                #width=7,
+                br(),
+                column(7,plotlyOutput("plot1",height = 800,width="100%")),
+                #box( status = "primary",solidHeader = TRUE,strong("Please Note: Not all locations have City data"),
+                column(5,wellPanel(formattableOutput("dataTable"),
+                                   style = "overflow-y:scroll; max-height: 800px")))
+              
+              
       ),
       tabItem(
         tabName = "trend",
@@ -188,7 +193,7 @@ ui <- dashboardPage(
                 h4(strong("References")),
                 p("RapidAPI", tags$a(href = "https://rapidapi.com/KishCom/api/covid-19-coronavirus-statistics?endpoint=apiendpoint_53587227-476d-4279-8f1d-4884e60d1db7", "COVID-19 Coronavirus Statistics"),"(last updated: 14 days ago)"),
                 p("Kaggle", tags$a(href = "https://www.kaggle.com/gpreda/coronavirus-2019ncov/data", "Coronavirus 2019-nCoV"),"(Updated almost daily)"),
-                h4("Please visit our ",tags$a(href = "#", "github"), "link to see our project. Thanks for visiting!!"),
+                h4("Please visit our ",tags$a(href = "https://github.com/chriztopherton/COVID19_DashBoard", "github"), "link to see our project. Thanks for visiting!!"),
                 hr()
               ),
               wellPanel(
@@ -245,7 +250,7 @@ server <- function(input, output) {
       summarise(total = sum(total))
   })
   
-
+  
   #by country
   data_by_country <- reactive({
     
@@ -262,27 +267,31 @@ server <- function(input, output) {
   #--------------------------------------------------------------------------------------------------------
   
   output$ConfirmedCases <-renderInfoBox({
-    infoBox(tags$p(style = "font-size: 15px; font-family: 'Palatino Linotype', 'Book Antiqua', 'Palatino', 'serif';", "Confirmed Cases"),
+    infoBox(tags$p(style = "font-size: 15px; font-family: 'Palatino Linotype', 'Book Antiqua', 'Palatino', 'serif';", 
+                   "Confirmed Cases"),
             sum(api()$confirmed),
-            color="yellow",fill=TRUE,icon=icon("notes-medical"),width=2)
+            color="black",fill=TRUE,icon=icon("notes-medical"),width=2)
   })
   
   output$Mortalities <-renderInfoBox({
-    infoBox(tags$p(style = "font-size: 15px;font-family: 'Palatino Linotype', 'Book Antiqua', 'Palatino', 'serif';", "Mortalities"),
+    infoBox(tags$p(style = "font-size: 15px;font-family: 'Palatino Linotype', 'Book Antiqua', 'Palatino', 'serif';", 
+                   "Mortalities"),
             sum(api()$deaths),
             color="red",fill=TRUE,icon=icon("diagnoses"),width=2)
   })
   
   output$Recoveries <-renderInfoBox({
-    infoBox(tags$p(style = "font-size: 15px;font-family: 'Palatino Linotype', 'Book Antiqua', 'Palatino', 'serif';", "Recoveries"),
+    infoBox(tags$p(style = "font-size: 15px;font-family: 'Palatino Linotype', 'Book Antiqua', 'Palatino', 'serif';",
+                   "Recoveries"),
             sum(api()$recovered),
             color="green",fill=TRUE,icon=icon("star-of-life"),width=2)
   })
   
   output$deathRatio <-renderInfoBox({
-    infoBox(tags$p(style = "font-size: 15px;font-family: 'Palatino Linotype', 'Book Antiqua', 'Palatino', 'serif';", "Mortality Rate"),
+    infoBox(tags$p(style = "font-size: 15px;font-family: 'Palatino Linotype', 'Book Antiqua', 'Palatino', 'serif';", 
+                   "Mortality Rate"),
             paste(round(sum(api()$deaths)/sum(api()$confirmed),4)*100,"%"),
-            color="black",fill=TRUE,icon=icon('percentage'),width=2)
+            color="blue",fill=TRUE,icon=icon('percentage'),width=2)
   })
   
   
@@ -291,7 +300,10 @@ server <- function(input, output) {
             y=~api_by_province()$province,
             color=~api_by_province()$province) %>% 
       layout(xaxis=list(title="Total Active Cases"),
-             yaxis=list(title='State/Province'))
+             yaxis=list(title='State/Province'),hoverlabel = list(bgcolor = "white", 
+                                                                  font = list(family = "Calibri", 
+                                                                              size = 9, 
+                                                                              color = "black")))
     
   })
   
@@ -299,15 +311,35 @@ server <- function(input, output) {
   #                                          list(lengthMenu=c(10,15),
   #                                               scrollX=TRUE))}
   
-  output$dataTable <- renderReactable({
-    reactable(api()[-3:-5] %>% arrange(desc(confirmed)),
-              filterable = TRUE, searchable = TRUE, bordered = TRUE, striped = TRUE, highlight = TRUE,
-              showSortable = TRUE, defaultSortOrder = "desc", defaultPageSize = 10, showPageSizeOptions = TRUE, pageSizeOptions = c(15,30,45,60,75), 
-              columns = list(
-                confirmed = colDef(filterable = FALSE,defaultSortOrder = "desc"),
-                deaths = colDef(filterable = FALSE, defaultSortOrder = "desc"),
-                recovered = colDef(filterable =  FALSE, defaultSortOrder = "desc")
-              ))
+  # output$dataTable <- renderReactable({
+  #   reactable(api()[-3:-5] %>% arrange(desc(confirmed)),
+  #             filterable = TRUE, searchable = TRUE, bordered = TRUE, striped = TRUE, highlight = TRUE,
+  #             showSortable = TRUE, defaultSortOrder = "desc", defaultPageSize = 10, showPageSizeOptions = TRUE, pageSizeOptions = c(15,30,45,60,75), 
+  #             columns = list(
+  #               confirmed = colDef(filterable = FALSE,defaultSortOrder = "desc"),
+  #               deaths = colDef(filterable = FALSE, defaultSortOrder = "desc"),
+  #               recovered = colDef(filterable =  FALSE, defaultSortOrder = "desc")
+  #             ))
+  # })
+  
+  output$dataTable <- renderFormattable({
+    formattable(
+      api()[-3:-5] %>% 
+        arrange(desc(confirmed)) %>% 
+        arrange(desc(deaths)) %>% 
+        arrange(desc(total)),
+      list(
+        city = color_tile("white","white"),
+        province = color_tile("white","white"),
+        #area(col = c(confirmed)) ~ normalize_bar("gray", 0.2),
+        #area(col = c(deaths)) ~ normalize_bar("red", 0.2),
+        #area(col = c(recovered)) ~ normalize_bar("green", 0.2),
+        confirmed = color_tile("white","gray"),
+        deaths = color_tile("white","red"),
+        recovered = color_tile("white","green"),
+        total = color_tile("white","orange")
+      )
+    )
   })
   
   # TRENDS PAGE        
@@ -364,7 +396,7 @@ server <- function(input, output) {
   #averages infoBoxes------------
   output$avgConf <- renderInfoBox({
     infoBox("Avg Global Change in Confirmed Cases Per Day",
-            color="yellow",fill=TRUE,icon=icon("notes-medical"),
+            color="light-blue",fill=TRUE,icon=icon("notes-medical"),
             all_count %>% 
               transmute(diff=lead(Confirmed)-Confirmed) %>% 
               summarise(avg=round(mean(diff,na.rm=TRUE),0)))
@@ -372,7 +404,7 @@ server <- function(input, output) {
   
   output$avgRecovered <- renderInfoBox({
     infoBox("Avg Global Change in Recoveries Per Day",
-            color="green",fill=TRUE,icon=icon("star-of-life"),
+            color="yellow",fill=TRUE,icon=icon("star-of-life"),
             all_count %>% 
               transmute(diff=lead(Recovered)-Recovered) %>% 
               summarise(avg=round(mean(diff,na.rm=TRUE),0)))
@@ -380,7 +412,7 @@ server <- function(input, output) {
   
   output$avgDeaths <- renderInfoBox({
     infoBox("Avg Global Change in Mortalities Per Day",
-            color="red",fill=TRUE,icon=icon("diagnoses"),
+            color="green",fill=TRUE,icon=icon("diagnoses"),
             all_count %>% 
               transmute(diff=lead(Deaths)-Deaths) %>% 
               summarise(avg=round(mean(diff,na.rm=TRUE),0)))
@@ -463,18 +495,18 @@ server <- function(input, output) {
             HTML(paste(strong("Coronavirus Cases:"),"</br>","• ",global_c,"</br>", 
                        "Most Confirmed:",most_c ,"</br>","</br>",
                        
-                  strong("Deaths:"),"</br>","• ",global_d,"</br>", 
-                  "Most Deaths:",most_d ,"</br>","</br>",
-                  
-                  strong("Recovered:"),"</br>","• ",global_r,"</br>", 
-                  "Most Recovered:",most_r ,"</br>","</br>",
-                  
-                  strong("Active Cases:"),"</br>","• ",global_a)),
-            color="yellow",fill=TRUE,icon=icon("notes-medical"),width=2)
+                       strong("Deaths:"),"</br>","• ",global_d,"</br>", 
+                       "Most Deaths:",most_d ,"</br>","</br>",
+                       
+                       strong("Recovered:"),"</br>","• ",global_r,"</br>", 
+                       "Most Recovered:",most_r ,"</br>","</br>",
+                       
+                       strong("Active Cases:"),"</br>","• ",global_a)),
+            color="light-blue",fill=TRUE,icon=icon("notes-medical"),width=2)
   })
- 
   
-   output$global_heat <- renderLeaflet({
+  
+  output$global_heat <- renderLeaflet({
     
     # GET WORLD DATA
     
@@ -532,7 +564,7 @@ server <- function(input, output) {
     #https://www.r-bloggers.com/exploring-london-crime-with-r-heat-maps/
     world_rona %>% 
       leaflet() %>%
-      addProviderTiles(providers$CartoDB.Positron) %>%
+      addProviderTiles(providers$Esri.NatGeoWorldMap) %>%
       addCircleMarkers(~as.numeric(longitude),
                        ~as.numeric(latitude),
                        fillColor = ~pal(active_cases),
@@ -558,7 +590,7 @@ server <- function(input, output) {
     
     specefic_c  %>% 
       leaflet() %>%
-      addProviderTiles(providers$CartoDB.Positron) %>%
+      addProviderTiles(providers$Esri.NatGeoWorldMap) %>%
       addCircleMarkers(~as.numeric(Longitude),
                        ~as.numeric(Latitude),
                        fillColor = ~pal(Total),
