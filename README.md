@@ -1,4 +1,4 @@
-
+Source for COVID-19 Data: https://github.com/CSSEGISandData/COVID-19
 **Link to demo video: https://www.youtube.com/watch?v=zYjHLKL1Vf8**
 
 ## Inspiration
