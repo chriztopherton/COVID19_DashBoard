@@ -1,22 +1,23 @@
-library(shiny)
-library(shinydashboard)
-#library(tidyverse)
-library(dplyr)
-library(ggplot2)
-library(tidyr)
-library(readr)
-library(jsonlite)
-library(httr)
-library(plotly)
-library(lubridate)
-library(rromeo)
-library(DT)
-library(leaflet)
-library(leaflet.extras)
-library(reactable)
-library(shinythemes)
-library(repmis) 
-library(formattable)
+suppressPackageStartupMessages({
+  library(shiny)
+  library(shinydashboard)
+  library(dplyr)
+  library(ggplot2)
+  library(tidyr)
+  library(readr)
+  library(jsonlite)
+  library(httr)
+  library(plotly)
+  library(lubridate)
+  library(rromeo)
+  library(DT)
+  library(leaflet)
+  library(leaflet.extras)
+  library(reactable)
+  library(shinythemes)
+  library(repmis) 
+  library(formattable)
+})
 # Historical data----------------------------------------------
 
 #read data from link, will get working later
@@ -45,10 +46,6 @@ all_count <- all_data %>%  group_by(Date) %>%
   summarise(Confirmed = sum(Confirmed), Recovered = sum(Recovered), Deaths = sum(Deaths), Total = sum(Total))
 all_count<-all_count %>% mutate(`% change` = 100 * (lead(Confirmed) - Confirmed) / Confirmed) %>% 
   head(59) #some bug that returns odd days, but its it correct up to the 59th row
-
-
-
-
 
 US_data <- all_data %>%
   filter(Country == "US") %>%
